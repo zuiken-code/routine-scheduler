@@ -2,6 +2,8 @@ import { create } from "zustand"
 import { persist } from "zustand/middleware"
 
 import type { DailyRecord } from "../features/records/types"
+import type { RoutineSet } from "../features/sets/types"
+import type { Schedule } from "../features/schedules/types"
 import {
   getOrCreateRecord,
   toggleHabit as toggleHabitUtil,
@@ -10,11 +12,13 @@ import {
 import { getToday } from "../lib/date"
 
 type DataState = {
-  sets: any[] // 後で型入れる
-  schedules: any[]
+  sets: RoutineSet[]
+  schedules: Schedule[]
   records: DailyRecord[]
 
   // actions
+  addSet: (newSet: RoutineSet) => void
+  addSchedule: (newSchedule: Schedule) => void
   getTodayRecord: (routineSetId: string) => DailyRecord
   toggleHabit: (
     habitId: string,
@@ -29,6 +33,11 @@ export const useDataStore = create<DataState>()(
       sets: [],
       schedules: [],
       records: [],
+
+      addSet: (newSet) =>
+        set((state) => ({ sets: [...state.sets, newSet] })),
+      addSchedule: (newSchedule) =>
+        set((state) => ({ schedules: [...state.schedules, newSchedule] })),
 
       // 🧠 今日のrecord取得 or 作成
       getTodayRecord: (routineSetId) => {
