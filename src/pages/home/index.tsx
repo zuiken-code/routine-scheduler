@@ -5,6 +5,10 @@ export default function Home() {
   const getTodayRecord = useDataStore((s) => s.getTodayRecord)
   const toggleHabit = useDataStore((s) => s.toggleHabit)
   const records = useDataStore((s) => s.records)
+  const sets = useDataStore((s) => s.sets)
+  const schedules = useDataStore((s) => s.schedules)
+  const addSet = useDataStore((s) => s.addSet)
+  const addSchedule = useDataStore((s) => s.addSchedule)
 
   // 🧪 仮のRoutineSet
   const routineSet = {
@@ -19,6 +23,22 @@ export default function Home() {
   // 🧠 初回ロードでrecord生成
   useEffect(() => {
     getTodayRecord(routineSet.id)
+
+    // 🧪 テスト: ストアが空なら初期データを投入
+    if (useDataStore.getState().sets.length === 0) {
+      addSet({
+        id: routineSet.id,
+        name: "テスト用ルーティン",
+        habits: routineSet.habits,
+      })
+    }
+    if (useDataStore.getState().schedules.length === 0) {
+      addSchedule({
+        contextId: "ctx-1",
+        dayOfWeek: 0,
+        routineSetId: routineSet.id,
+      })
+    }
   }, [])
 
   const todayRecord = records.find(
@@ -74,6 +94,15 @@ export default function Home() {
           )
         })}
       </ul>
+
+      {/* 🛠️ デバッグ表示 */}
+      <div style={{ marginTop: 32, padding: 16, background: "#f5f5f5", borderRadius: 8, fontSize: 12 }}>
+        <h3 style={{ marginTop: 0 }}>ストアのデータ確認用:</h3>
+        <p>Sets: {sets.length}件</p>
+        <pre>{JSON.stringify(sets, null, 2)}</pre>
+        <p>Schedules: {schedules.length}件</p>
+        <pre>{JSON.stringify(schedules, null, 2)}</pre>
+      </div>
     </div>
   )
 }
