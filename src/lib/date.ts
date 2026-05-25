@@ -1,5 +1,9 @@
 export function getToday() {
-  return new Date().toISOString().slice(0, 10)
+  const d = new Date()
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, "0")
+  const day = String(d.getDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
 }
 
 /** 曜日番号を取得 (0=日, 1=月, ...6=土) */
@@ -21,8 +25,10 @@ export function getMonthDates(year: number, month: number): string[] {
   const daysInMonth = new Date(year, month + 1, 0).getDate()
 
   for (let day = 1; day <= daysInMonth; day++) {
-    const d = new Date(year, month, day)
-    dates.push(d.toISOString().slice(0, 10))
+    const y = year
+    const m = String(month + 1).padStart(2, "0")
+    const dStr = String(day).padStart(2, "0")
+    dates.push(`${y}-${m}-${dStr}`)
   }
   return dates
 }

@@ -1,5 +1,6 @@
 import { useDataStore } from "../../stores/dataStore"
-import { getToday, formatDate, getDayOfWeek, getDayLabel } from "../../lib/date"
+import { useUIStore } from "../../stores/uiStore"
+import { formatDate, getDayOfWeek, getDayLabel } from "../../lib/date"
 
 export default function Home() {
   const sets = useDataStore((s) => s.sets)
@@ -11,8 +12,11 @@ export default function Home() {
   const overrideSetId = useDataStore((s) => s.overrideSetId)
   const overrideDate = useDataStore((s) => s.overrideDate)
 
-  const today = getToday()
-  const dayOfWeek = getDayOfWeek()
+  const currentDate = useUIStore((s) => s.currentDate)
+  const updateCurrentDate = useUIStore((s) => s.updateCurrentDate)
+
+  const today = currentDate
+  const dayOfWeek = getDayOfWeek(today)
   const todaySet = getSetForToday()
 
   // 今日のレコードを取得/作成
@@ -27,7 +31,22 @@ export default function Home() {
 
   return (
     <div style={{ padding: 16 }}>
-      <h2>今日のやること</h2>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+        <h2 style={{ margin: 0 }}>今日のやること</h2>
+        <button
+          onClick={updateCurrentDate}
+          style={{
+            fontSize: 12,
+            padding: "4px 8px",
+            borderRadius: 4,
+            border: "1px solid #ccc",
+            background: "#fff",
+            cursor: "pointer"
+          }}
+        >
+          日付を更新
+        </button>
+      </div>
       <p style={{ color: "#888", marginBottom: 8 }}>
         {formatDate(today)}（{getDayLabel(dayOfWeek)}曜日）
       </p>
