@@ -57,3 +57,10 @@ export function getOrCreateRecord(
   return createEmptyRecord(date, routineSetId)
 }
 
+/** 特定の日付のレコードを取得（なければ undefined） */
+export function getRecordByDate(
+  records: DailyRecord[],
+  date: string
+): DailyRecord | undefined {
+  return records.find((r) => r.date === date)
+}

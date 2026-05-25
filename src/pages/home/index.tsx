@@ -1,108 +1,190 @@
-import { useEffect } from "react"
 import { useDataStore } from "../../stores/dataStore"
+import { getToday, formatDate, getDayOfWeek, getDayLabel } from "../../lib/date"
 
 export default function Home() {
-  const getTodayRecord = useDataStore((s) => s.getTodayRecord)
-  const toggleHabit = useDataStore((s) => s.toggleHabit)
-  const records = useDataStore((s) => s.records)
   const sets = useDataStore((s) => s.sets)
-  const schedules = useDataStore((s) => s.schedules)
-  const addSet = useDataStore((s) => s.addSet)
-  const addSchedule = useDataStore((s) => s.addSchedule)
+  const records = useDataStore((s) => s.records)
+  const toggleHabit = useDataStore((s) => s.toggleHabit)
+  const getTodayRecord = useDataStore((s) => s.getTodayRecord)
+  const getSetForToday = useDataStore((s) => s.getSetForToday)
+  const setOverride = useDataStore((s) => s.setOverride)
+  const overrideSetId = useDataStore((s) => s.overrideSetId)
+  const overrideDate = useDataStore((s) => s.overrideDate)
 
-  // 🧪 仮のRoutineSet
-  const routineSet = {
-    id: "default-set",
-    habits: [
-      { id: "h1", title: "腕立て" },
-      { id: "h2", title: "英単語" },
-      { id: "h3", title: "ストレッチ" },
-    ],
+  const today = getToday()
+  const dayOfWeek = getDayOfWeek()
+  const todaySet = getSetForToday()
+
+  // 今日のレコードを取得/作成
+  if (todaySet) {
+    getTodayRecord(todaySet.id)
   }
 
-  // 🧠 初回ロードでrecord生成
-  useEffect(() => {
-    getTodayRecord(routineSet.id)
+  const todayRecord = records.find((r) => r.date === today)
 
-    // 🧪 テスト: ストアが空なら初期データを投入
-    if (useDataStore.getState().sets.length === 0) {
-      addSet({
-        id: routineSet.id,
-        name: "テスト用ルーティン",
-        habits: routineSet.habits,
-      })
-    }
-    if (useDataStore.getState().schedules.length === 0) {
-      addSchedule({
-        contextId: "ctx-1",
-        dayOfWeek: 0,
-        routineSetId: routineSet.id,
-      })
-    }
-  }, [])
-
-  const todayRecord = records.find(
-    (r) => r.date === new Date().toISOString().slice(0, 10)
-  )
-
-  if (!todayRecord) return <div>loading...</div>
+  // 上書きが有効か
+  const isOverridden = overrideSetId !== null && overrideDate === today
 
   return (
     <div style={{ padding: 16 }}>
       <h2>今日のやること</h2>
+      <p style={{ color: "#888", marginBottom: 8 }}>
+        {formatDate(today)}（{getDayLabel(dayOfWeek)}曜日）
+      </p>
 
-      {/* 📊 達成率 */}
-      <div style={{ marginBottom: 16 }}>
-        <strong>{Math.round(todayRecord.achievementRate)}%</strong>
-        <span>（{todayRecord.status}）</span>
-      </div>
+      {/* パターン未設定 */}
+      {!todaySet && (
+        <div style={{ padding: 24, textAlign: "center", color: "#999" }}>
+          <p>今日のスケジュールが設定されていません。</p>
+          <p style={{ fontSize: 14, marginTop: 8 }}>
+            「週間」タブで曜日ごとのパターンを設定してください。
+          </p>
+        </div>
+      )}
 
-      {/* 📋 Habit一覧 */}
-      <ul style={{ listStyle: "none", padding: 0 }}>
-        {routineSet.habits.map((habit) => {
-          const checked = todayRecord.completedHabits.includes(habit.id)
-
-          return (
-            <li
-              key={habit.id}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                marginBottom: 8,
+      {/* パターンあり */}
+      {todaySet && (
+        <>
+          {/* パターン表示 + 変更 */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              marginBottom: 12,
+            }}
+          >
+            <span style={{ fontSize: 14, color: "#666" }}>
+              パターン: <strong>{todaySet.name}</strong>
+              {isOverridden && " (手動変更中)"}
+            </span>
+            {/* パターン変更セレクト */}
+            <select
+              value={todaySet.id}
+              onChange={(e) => {
+                const val = e.target.value
+                setOverride(val === "" ? null : val)
               }}
+              style={{ fontSize: 14, padding: "2px 6px" }}
             >
-              <input
-                type="checkbox"
-                checked={checked}
-                onChange={() =>
-                  toggleHabit(
-                    habit.id,
-                    routineSet.habits.length,
-                    routineSet.id
-                  )
-                }
-              />
-              <span
+              {sets.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+            {isOverridden && (
+              <button
+                onClick={() => setOverride(null)}
+                style={{ fontSize: 12, padding: "2px 8px" }}
+              >
+                元に戻す
+              </button>
+            )}
+          </div>
+
+          {/* 達成率 */}
+          {todayRecord && (
+            <div style={{ marginBottom: 16 }}>
+              <div
                 style={{
-                  marginLeft: 8,
-                  textDecoration: checked ? "line-through" : "none",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  marginBottom: 4,
                 }}
               >
-                {habit.title}
-              </span>
-            </li>
-          )
-        })}
-      </ul>
+                <strong style={{ fontSize: 24 }}>
+                  {Math.round(todayRecord.achievementRate)}%
+                </strong>
+                <span style={{ fontSize: 14, color: "#888" }}>
+                  ({todayRecord.completedHabits.length}/{todaySet.habits.length}
+                  完了)
+                </span>
+              </div>
+              {/* プログレスバー */}
+              <div
+                style={{
+                  width: "100%",
+                  height: 8,
+                  background: "#e0e0e0",
+                  borderRadius: 4,
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    width: `${todayRecord.achievementRate}%`,
+                    height: "100%",
+                    background:
+                      todayRecord.status === "complete"
+                        ? "#4caf50"
+                        : todayRecord.status === "partial"
+                        ? "#ff9800"
+                        : "#e0e0e0",
+                    borderRadius: 4,
+                    transition: "width 0.3s ease",
+                  }}
+                />
+              </div>
+            </div>
+          )}
 
-      {/* 🛠️ デバッグ表示 */}
-      <div style={{ marginTop: 32, padding: 16, background: "#f5f5f5", borderRadius: 8, fontSize: 12 }}>
-        <h3 style={{ marginTop: 0 }}>ストアのデータ確認用:</h3>
-        <p>Sets: {sets.length}件</p>
-        <pre>{JSON.stringify(sets, null, 2)}</pre>
-        <p>Schedules: {schedules.length}件</p>
-        <pre>{JSON.stringify(schedules, null, 2)}</pre>
-      </div>
+          {/* タスク一覧が空 */}
+          {todaySet.habits.length === 0 && (
+            <p style={{ color: "#999", fontSize: 14 }}>
+              このパターンにはまだタスクがありません。「1日」タブでタスクを追加してください。
+            </p>
+          )}
+
+          {/* Habit一覧 */}
+          <ul style={{ listStyle: "none", padding: 0 }}>
+            {todaySet.habits.map((habit) => {
+              const checked =
+                todayRecord?.completedHabits.includes(habit.id) ?? false
+
+              return (
+                <li
+                  key={habit.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    padding: "10px 0",
+                    borderBottom: "1px solid #eee",
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() =>
+                      toggleHabit(
+                        habit.id,
+                        todaySet.habits.length,
+                        todaySet.id
+                      )
+                    }
+                    style={{
+                      width: 20,
+                      height: 20,
+                      cursor: "pointer",
+                    }}
+                  />
+                  <span
+                    style={{
+                      marginLeft: 12,
+                      fontSize: 16,
+                      textDecoration: checked ? "line-through" : "none",
+                      color: checked ? "#aaa" : "#333",
+                    }}
+                  >
+                    {habit.title}
+                  </span>
+                </li>
+              )
+            })}
+          </ul>
+        </>
+      )}
     </div>
   )
 }
