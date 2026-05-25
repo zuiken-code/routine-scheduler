@@ -64,7 +64,12 @@ body {
 .bottom-nav button:nth-child(3)::before { content: "📅"; }
 .bottom-nav button:nth-child(4)::before { content: "🗓️"; }
 
-/* focusなどで選択されている風にする場合 */
-.bottom-nav button:focus {
+/* アクティブ状態のスタイル */
+.bottom-nav button.active {
   color: var(--primary);
+  font-weight: 700;
+}
+.bottom-nav button.active::before {
+  transform: scale(1.15);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
